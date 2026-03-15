@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MANISPHERE — Computer Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #080b10;
+      --surface:  #0d1117;
+      --card:     #111820;
+      --border:   #1e2d3d;
+      --accent:   #00d4ff;
+      --accent2:  #ff6b35;
+      --glow:     rgba(0,212,255,0.18);
+      --text:     #c9d8e8;
+      --muted:    #4a6070;
+      --white:    #e8f4ff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+    }
+    .cursor-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.15s ease;
+      opacity: 0.6;
+    }
+
+    /* Scanline overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none; z-index: 100;
+    }
+
+    /* ─── NAV ─────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 4rem;
+      background: rgba(8,11,16,0.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900; font-size: 1.5rem;
+      color: var(--white); letter-spacing: 0.15em;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem; letter-spacing: 0.12em;
+      color: var(--muted); text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--accent);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem; letter-spacing: 0.1em;
+      padding: 0.55rem 1.4rem;
+      border: 1px solid var(--accent);
+      color: var(--accent); background: transparent;
+      cursor: none; text-transform: uppercase;
+      transition: all 0.25s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .nav-cta:hover {
+      background: var(--accent); color: var(--bg);
+      box-shadow: 0 0 20px var(--glow);
+    }
+
+    /* ─── HERO ────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 8rem 4rem 4rem;
+      position: relative; overflow: hidden;
+    }
+
+    /* Grid background */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.4;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    /* Glowing orb */
+    .hero-orb {
+      position: absolute; top: 15%; right: 5%;
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.7} }
+
+    .hero-content { position: relative; z-index: 2; max-width: 680px; }
+
+    .hero-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.25em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .hero-tag::before {
+      content: ''; display: block;
+      width: 2rem; height: 1px; background: var(--accent);
+    }
+
+    .hero h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.0;
+      color: var(--white);
+      letter-spacing: -0.01em;
+      margin-bottom: 0.4rem;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero h1 .accent2 { color: var(--accent2); }
+
+    .hero-sub {
+      font-size: 1.15rem; font-weight: 300;
+      color: var(--muted); line-height: 1.7;
+      margin: 1.5rem 0 2.5rem;
+      max-width: 480px;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; align-items: center; }
+
+    .btn-primary {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.9rem 2rem;
+      background: var(--accent); color: var(--bg);
+      border: none; cursor: none;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: all 0.25s;
+    }
+    .btn-primary:hover { box-shadow: 0 0 30px rgba(0,212,255,0.5); transform: translateY(-2px); }
+
+    .btn-ghost {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.9rem 2rem;
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); cursor: none;
+      transition: all 0.25s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .hero-stats {
+      position: absolute; bottom: 3rem; right: 4rem;
+      display: flex; gap: 3rem;
+    }
+    .stat-item { text-align: right; }
+    .stat-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem; font-weight: 700;
+      color: var(--white);
+    }
+    .stat-num span { color: var(--accent); }
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.2em;
+      color: var(--muted); text-transform: uppercase;
+    }
+
+    /* ─── SECTION COMMONS ─────────────────────── */
+    section { padding: 6rem 4rem; }
+
+    .section-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; letter-spacing: 0.3em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 700; color: var(--white);
+      line-height: 1.15; margin-bottom: 1rem;
+    }
+    .section-title span { color: var(--accent); }
+
+    /* ─── TICKER ──────────────────────────────── */
+    .ticker {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 0; overflow: hidden;
+    }
+    .ticker-inner {
+      display: flex; gap: 4rem;
+      animation: ticker 28s linear infinite;
+      white-space: nowrap;
+    }
+    @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .ticker-item {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.15em;
+      color: var(--muted); text-transform: uppercase;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .ticker-item::before { content:'◆'; color: var(--accent); font-size: 0.5rem; }
+
+    /* ─── PRODUCTS ────────────────────────────── */
+    #products { background: var(--bg); }
+    .products-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; }
+
+    .filter-tabs { display: flex; gap: 0.5rem; }
+    .filter-tab {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.45rem 1rem;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); cursor: none;
+      transition: all 0.2s;
+    }
+    .filter-tab.active, .filter-tab:hover {
+      background: var(--accent); color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5px;
+      background: var(--border);
+    }
+
+    .product-card {
+      background: var(--card);
+      padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: all 0.3s;
+      cursor: none;
+    }
+    .product-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 3px; height: 0;
+      background: var(--accent);
+      transition: height 0.3s;
+    }
+    .product-card:hover { background: #141e28; }
+    .product-card:hover::before { height: 100%; }
+    .product-card:hover .product-img { transform: scale(1.05); }
+
+    .product-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid rgba(0,212,255,0.3);
+      color: var(--accent);
+      display: inline-block; margin-bottom: 1.5rem;
+    }
+    .product-badge.hot {
+      background: rgba(255,107,53,0.1);
+      border-color: rgba(255,107,53,0.3);
+      color: var(--accent2);
+    }
+
+    .product-img {
+      width: 100%; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem; margin-bottom: 1.5rem;
+      transition: transform 0.3s;
+      filter: drop-shadow(0 0 20px rgba(0,212,255,0.2));
+    }
+
+    .product-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--white); margin-bottom: 0.4rem;
+      line-height: 1.3;
+    }
+    .product-spec {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--muted); margin-bottom: 1.5rem;
+      line-height: 1.8;
+    }
+    .product-footer { display: flex; justify-content: space-between; align-items: center; }
+    .product-price {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.3rem; font-weight: 700; color: var(--accent);
+    }
+    .product-price .currency { font-size: 0.8rem; vertical-align: super; }
+    .add-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.5rem 1rem;
+      background: transparent; color: var(--accent);
+      border: 1px solid var(--accent); cursor: none;
+      transition: all 0.2s;
+    }
+    .add-btn:hover { background: var(--accent); color: var(--bg); }
+
+    /* ─── SERVICES ────────────────────────────── */
+    #services {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+
+    .service-card {
+      border: 1px solid var(--border);
+      padding: 2rem;
+      position: relative; overflow: hidden;
+      background: var(--card);
+      transition: all 0.3s; cursor: none;
+    }
+    .service-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .service-card:hover .service-icon { color: var(--accent); }
+
+    .service-corner {
+      position: absolute; top: 0; right: 0;
+      width: 30px; height: 30px;
+      border-top: 2px solid var(--accent);
+      border-right: 2px solid var(--accent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .service-card:hover .service-corner { opacity: 1; }
+
+    .service-icon {
+      font-size: 2.2rem; margin-bottom: 1rem;
+      transition: color 0.3s;
+    }
+    .service-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--white); margin-bottom: 0.7rem;
+    }
+    .service-desc {
+      font-size: 0.95rem; font-weight: 300;
+      color: var(--muted); line-height: 1.7;
+    }
+
+    /* ─── ABOUT ───────────────────────────────── */
+    #about {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; align-items: center;
+      background: var(--bg);
+    }
+
+    .about-visual {
+      position: relative; display: flex;
+      align-items: center; justify-content: center;
+    }
+
+    .about-ring {
+      width: 380px; height: 380px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      position: absolute;
+      animation: spin 18s linear infinite;
+    }
+    .about-ring::after {
+      content: '';
+      position: absolute; top: -4px; left: 50%;
+      width: 8px; height: 8px;
+      background: var(--accent); border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent);
+      transform: translateX(-50%);
+    }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    .about-ring-2 {
+      width: 280px; height: 280px;
+      border: 1px dashed var(--border);
+      border-radius: 50%;
+      position: absolute;
+      animation: spin 12s linear infinite reverse;
+    }
+
+    .about-center {
+      position: relative; z-index: 2;
+      font-size: 5rem; text-align: center;
+      filter: drop-shadow(0 0 30px rgba(0,212,255,0.4));
+    }
+
+    .about-content p {
+      font-size: 1.05rem; line-height: 1.85;
+      color: var(--text); margin-bottom: 1.2rem;
+    }
+
+    .about-list { list-style: none; margin-top: 1.5rem; }
+    .about-list li {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem; letter-spacing: 0.08em;
+      color: var(--muted); padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.7rem;
+    }
+    .about-list li::before { content: '▸'; color: var(--accent); }
+
+    /* ─── CONTACT ─────────────────────────────── */
+    #contact {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1.2fr;
+      gap: 5rem; margin-top: 3rem; align-items: start;
+    }
+
+    .contact-info { display: flex; flex-direction: column; gap: 1.5rem; }
+    .contact-item {
+      display: flex; gap: 1rem; align-items: flex-start;
+    }
+    .contact-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .contact-detail-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.3rem;
+    }
+    .contact-detail-value {
+      font-size: 1rem; color: var(--text);
+    }
+
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .form-input, .form-textarea {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
+      cursor: none;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { height: 120px; resize: vertical; }
+
+    .form-submit {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 1rem;
+      background: var(--accent); color: var(--bg);
+      border: none; cursor: none;
+      transition: all 0.25s;
+      clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+    }
+    .form-submit:hover { box-shadow: 0 0 25px rgba(0,212,255,0.4); transform: translateY(-2px); }
+
+    /* ─── FOOTER ──────────────────────────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 4rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem; font-weight: 900; color: var(--white);
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted);
+    }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ─── ANIMATIONS ──────────────────────────── */
+    .fade-up {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.5rem; }
+      .hero { padding: 7rem 1.5rem 4rem; }
+      .hero-stats { right: 1.5rem; gap: 1.5rem; }
+      #about { grid-template-columns: 1fr; gap: 3rem; }
+      .about-visual { display: none; }
+      .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div class="cursor" id="cursor">
+  <div class="cursor-dot" id="cursorDot"></div>
+</div>
+<div class="cursor" id="cursorRing">
+  <div class="cursor-ring" id="cursorRingEl"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">MANI<span>SPHERE</span></div>
+  <ul class="nav-links">
+    <li><a href="#products">Products</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <button class="nav-cta">Get a Quote</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-orb"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Est. 2026 · Premium Hardware</div>
+    <h1>BUILD YOUR<br><span class="accent">DREAM</span><br><span class="accent2">MACHINE</span></h1>
+    <p class="hero-sub">High-performance computers, cutting-edge components, and expert tech solutions — engineered for the way you work and play.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+      <button class="btn-ghost" onclick="document.getElementById('services').scrollIntoView({behavior:'smooth'})">Our Services</button>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">2K<span>+</span></div>
+      <div class="stat-label">Products</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">98<span>%</span></div>
+      <div class="stat-label">Satisfaction</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">7<span>yr</span></div>
+      <div class="stat-label">Experience</div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">Intel Core i9 – 14th Gen</span>
+    <span class="ticker-item">AMD Ryzen 9 7950X</span>
+    <span class="ticker-item">NVIDIA RTX 5090</span>
+    <span class="ticker-item">Samsung 990 Pro NVMe</span>
+    <span class="ticker-item">G.Skill Trident Z5 RGB DDR5</span>
+    <span class="ticker-item">ASUS ROG Maximus Z790</span>
+    <span class="ticker-item">Corsair HX1200i PSU</span>
+    <span class="ticker-item">NZXT H9 Elite Case</span>
+    <span class="ticker-item">Intel Core i9 – 14th Gen</span>
+    <span class="ticker-item">AMD Ryzen 9 7950X</span>
+    <span class="ticker-item">NVIDIA RTX 5090</span>
+    <span class="ticker-item">Samsung 990 Pro NVMe</span>
+    <span class="ticker-item">G.Skill Trident Z5 RGB DDR5</span>
+    <span class="ticker-item">ASUS ROG Maximus Z790</span>
+    <span class="ticker-item">Corsair HX1200i PSU</span>
+    <span class="ticker-item">NZXT H9 Elite Case</span>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<section id="products">
+  <div class="products-header fade-up">
+    <div>
+      <div class="section-tag">// Hardware Catalog</div>
+      <h2 class="section-title">Featured <span>Products</span></h2>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active">All</button>
+      <button class="filter-tab">PCs</button>
+      <button class="filter-tab">Parts</button>
+      <button class="filter-tab">Peripherals</button>
+    </div>
+  </div>
+
+  <div class="products-grid fade-up">
+
+    <div class="product-card">
+      <div class="product-badge hot">🔥 Best Seller</div>
+      <div class="product-img">🖥️</div>
+      <div class="product-name">NEXCORE PRO TITAN X</div>
+      <div class="product-spec">Intel i9-14900K · RTX 4090<br>64GB DDR5 · 2TB NVMe</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>3,499</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-badge">New Arrival</div>
+      <div class="product-img">💻</div>
+      <div class="product-name">NEXCORE ULTRA SLIM 15</div>
+      <div class="product-spec">AMD Ryzen 9 7940HS · RTX 4070<br>32GB DDR5 · 1TB NVMe</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>1,899</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-badge">Featured</div>
+      <div class="product-img">🎮</div>
+      <div class="product-name">NEXCORE GAMING RIG Z</div>
+      <div class="product-spec">Intel i7-14700K · RTX 4080S<br>32GB DDR5 · 1TB NVMe</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>2,249</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-badge hot">Limited Stock</div>
+      <div class="product-img">⚡</div>
+      <div class="product-name">NVIDIA RTX 5090 GPU</div>
+      <div class="product-spec">32GB GDDR7 · 512-bit Bus<br>PCIe 5.0 · 600W TDP</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>1,999</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-badge">Value Pick</div>
+      <div class="product-img">🖱️</div>
+      <div class="product-name">NEXCORE MK ULTRA PRO</div>
+      <div class="product-spec">Mechanical TKL Keyboard<br>75g Linear Switches · RGB</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>149</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <div class="product-badge">Featured</div>
+      <div class="product-img">🖨️</div>
+      <div class="product-name">NEXCORE 4K IPS 27"</div>
+      <div class="product-spec">3840×2160 · 144Hz IPS<br>1ms GTG · HDR600 · USB-C</div>
+      <div class="product-footer">
+        <div class="product-price"><span class="currency">$</span>699</div>
+        <button class="add-btn">Add to Cart</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="fade-up">
+    <div class="section-tag">// What We Do</div>
+    <h2 class="section-title">Our <span>Services</span></h2>
+  </div>
+  <div class="services-grid fade-up">
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">🔧</div>
+      <div class="service-title">PC Repair & Diagnostics</div>
+      <div class="service-desc">Fast turnaround on all hardware repairs. Full diagnostics, component swaps, overheating fixes, and data recovery.</div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">⚙️</div>
+      <div class="service-title">Custom PC Builds</div>
+      <div class="service-desc">We build the machine of your dreams — from budget workstations to extreme gaming rigs, tailored to your exact specs.</div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">🛡️</div>
+      <div class="service-title">Security & Antivirus</div>
+      <div class="service-desc">Malware removal, system hardening, network security audits, and professional antivirus installation and setup.</div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">📡</div>
+      <div class="service-title">Network Setup</div>
+      <div class="service-desc">Home and office networking, Wi-Fi optimization, NAS configuration, and enterprise-level LAN infrastructure.</div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">💾</div>
+      <div class="service-title">Data Recovery</div>
+      <div class="service-desc">Recover files from damaged drives, failed SSDs, corrupted partitions, and accidentally deleted storage.</div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-corner"></div>
+      <div class="service-icon">🎓</div>
+      <div class="service-title">Tech Consultation</div>
+      <div class="service-desc">Not sure what to buy or upgrade? Our experts will guide you to the best solution within your budget.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-visual fade-up">
+    <div class="about-ring"></div>
+    <div class="about-ring-2"></div>
+    <div class="about-center">💻</div>
+  </div>
+  <div class="about-content fade-up">
+    <div class="section-tag">// Our Story</div>
+    <h2 class="section-title">Why Choose <span>NEXCORE</span>?</h2>
+    <p>NEXCORE was founded with one mission — to provide tech enthusiasts, professionals, and gamers with access to the very best hardware and expertise under one roof.</p>
+    <p>From humble beginnings as a one-person repair shop, we've grown into a full-service computer store trusted by thousands of customers across the region.</p>
+    <ul class="about-list">
+      <li>Authorized reseller of 30+ top brands</li>
+      <li>Certified technicians with 10+ years experience</li>
+      <li>Same-day repair on most hardware issues</li>
+      <li>Price-match guarantee on all products</li>
+      <li>Free tech advice — no purchase required</li>
+      <li>Extended warranty on all custom builds</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="fade-up">
+    <div class="section-tag">// Reach Us</div>
+    <h2 class="section-title">Get In <span>Touch</span></h2>
+  </div>
+  <div class="contact-grid fade-up">
+    <div class="contact-info">
+      <div class="contact-item">
+        <div class="contact-icon">📍</div>
+        <div>
+          <div class="contact-detail-label">Address</div>
+          <div class="contact-detail-value">5-178 keelathuruvasapuram kannanur post Thirumayam TK Pudukkottai DT</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📞</div>
+        <div>
+          <div class="contact-detail-label">Phone</div>
+          <div class="contact-detail-value">+65 85909284 (MANISPHERE)</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📧</div>
+        <div>
+          <div class="contact-detail-label">Email</div>
+          <div class="contact-detail-value">Manik779@gmail.com</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">🕐</div>
+        <div>
+          <div class="contact-detail-label">Hours</div>
+          <div class="contact-detail-value">Mon – Sat: 9:00 AM – 8:00 PM<br>Sunday: 10:00 AM – 5:00 PM</div>
+        </div>
+      </div>
+    </div>
+    <div class="contact-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" type="text" placeholder="John"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" type="text" placeholder="Doe"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" placeholder="john@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input class="form-input" type="text" placeholder="Custom PC Build / Repair Request / General Inquiry"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea class="form-textarea" placeholder="Describe your needs or questions..."></textarea>
+      </div>
+      <button class="form-submit">Send Message ▸</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">MANI<span>SPHERE</span></div>
+  <div class="footer-copy">© 2026 MANISPHERE Computer Shop. All rights reserved.</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Sitemap</a>
+  </div>
+</footer>
+
+<script>
+  // Custom cursor
+  const dot = document.getElementById('cursorDot');
+  const ring = document.getElementById('cursorRingEl');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  (function animCursor() {
+    dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  })();
+
+  // Filter tabs
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // Scroll fade-in
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Add to cart feedback
+  document.querySelectorAll('.add-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Added';
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'var(--bg)';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 1800);
+    });
+  });
+</script>
+</body>
+</html>
